@@ -5,9 +5,9 @@ import torch.nn.functional as F
 class BaselineCNN(nn.Module):
   def __init__(self, in_channels):
     super(BaselineCNN, self).__init__()
-    self.conv1 = nn.Conv2d(in_channels, 10, kernel_size=5, padding=2)
-    self.conv2 = nn.Conv2d(10 + in_channels, 20, kernel_size=5, padding=2)
-    self.conv3 = nn.Conv2d(10 + in_channels + 20 + in_channels, 1, kernel_size=1)
+    self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=5, padding=2)
+    self.conv2 = nn.Conv2d(64 + in_channels, 128, kernel_size=5, padding=2)
+    self.conv3 = nn.Conv2d(64 + in_channels + 128 + in_channels, 1, kernel_size=1)
 
   def forward(self, x):
       c1 = self.conv1(x)
