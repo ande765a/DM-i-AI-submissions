@@ -18,14 +18,9 @@ class WaldoDataset(Dataset):
   def __getitem__(self, index):
     image_filename, x, y = self.df.iloc[index]
     image_path = os.path.join(self.root_path, "images", image_filename)
+    mask_path = os.path.join(self.root_path, "masks", image_filename)
     image = Image.open(image_path)
-
-    w, h = image.size
-
-    mask = torch.zeros(h, w)
-    mask[y, x] = 1
-
-    mask = to_pil_image(mask)
+    mask = Image.open(mask_path)
 
     if self.transform is not None:
       image, mask = self.transform(image, mask)
