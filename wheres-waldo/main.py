@@ -20,17 +20,16 @@ train_dataset = WaldoDataset(transform=Compose([
 ]))
 test_dataset = WaldoDataset(test=True, transform=ToTensor())
 
-train_data = DataLoader(train_dataset, batch_size=32, shuffle=False, num_workers=0)
+train_data = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=24)
 
 model = BaselineCNN(in_channels=3).to(device)
 
-num_epochs = 10
-learning_rate = 0.001
+num_epochs = 100
+learning_rate = 0.01
 optim = torch.optim.Adam(model.parameters(), lr=learning_rate)
-criterion = torch.nn.CrossEntropyLoss()
+criterion = torch.nn.BCELossWithLogits()
 
 loss_history = []
-
 
 wandb.init(project="wheres-waldo", entity="andersthuesen")
 
@@ -40,9 +39,10 @@ wandb.config = {
 }
 
 
-for epoch in range(5):
+for epoch in range(num_epochs):
   print(f"Training epoch {epoch + 1}")
   
+  model.train()
   tqdm_train_data = tqdm(train_data)
   for image, mask, _ in tqdm_train_data:
     image, mask = image.to(device), mask.to(device)
@@ -50,8 +50,6 @@ for epoch in range(5):
     optim.zero_grad()
     logits = model(image)
     logits = logits.reshape(logits.shape[0], -1) # Flatten
-    output = torch.softmax(logits, dim=1)
-    mask = mask.reshape(mask.shape[0], -1) # Flatten
 
     loss = criterion(logits, mask)
     loss.backward()
@@ -63,22 +61,20 @@ for epoch in range(5):
     tqdm_train_data.set_description(f"Loss: {loss.item():.4f}")
     optim.step()
 
-
+  model.eval()
   print(f"Testing epoch {epoch + 1}")
   error = 0
   tqdm_test_data = tqdm(test_dataset)
-  for image, mask, (x, y) in tqdm_test_data:
-    image, mask = image[None, :], mask[None, :] # Add batch dimension
-    image, mask = image.to(device), mask.to(device) # Move to GPU
-
+  for image, _, (x, y) in tqdm_test_data:
+    image = image[None, :].to(device) # Add 
     logits = model(image)
-    logits = logits.reshape(logits.shape[0], -1) # Flatten
 
-    preds = torch.argmax(logits, dim=1)
+    preds = torch.argmax(logits.reshape(logits.shape[0], -1), dim=1)
   
     px = (preds % image.shape[3]).item()
     py = (preds / image.shape[2]).item()
 
-    error += sqrt((x - px) ** 2 + (y - py) ** 2) / len(tqdm_test_data)
+    error += sqrt((x - px) ** 2 + (y - py) ** 2) / len(test_dataset)
   
-  print("Mean euclidian distance is {}".format(error))
+  print("Mean euclideaan distance is {}".format(error))
+  wandb.log({'mean-euclidean': error})
