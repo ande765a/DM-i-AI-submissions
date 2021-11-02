@@ -30,4 +30,4 @@ class WaldoDataset(Dataset):
     if self.transform is not None:
       image, mask = self.transform(image, mask)
 
-    return image, mask
+    return image, mask, (x, y)

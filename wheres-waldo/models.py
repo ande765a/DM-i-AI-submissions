@@ -8,7 +8,6 @@ class BaselineCNN(nn.Module):
     self.conv1 = nn.Conv2d(in_channels, 10, kernel_size=5, padding=2)
     self.conv2 = nn.Conv2d(10 + in_channels, 20, kernel_size=5, padding=2)
     self.conv3 = nn.Conv2d(10 + in_channels + 20 + in_channels, 1, kernel_size=1)
-    self.softmax = nn.Softmax2d()
 
   def forward(self, x):
       c1 = self.conv1(x)
@@ -20,5 +19,4 @@ class BaselineCNN(nn.Module):
       c2 = torch.concat((c2, c1, x), dim=1)
 
       c3 = self.conv3(c2)
-      c3 = self.softmax(c3)
       return c3
