@@ -12,11 +12,11 @@ class BaselineCNN(nn.Module):
   def forward(self, x):
       c1 = self.conv1(x)
       c1 = F.relu(c1)
-      c1 = torch.concat((c1, x), dim=1)
+      c1 = torch.concat((c1, x), dim=1) # Concatenate along channel dimension
 
       c2 = self.conv2(c1)
       c2 = F.relu(c2)
-      c2 = torch.concat((c2, c1, x), dim=1)
+      c2 = torch.concat((c2, c1, x), dim=1) # Concatenate along channel dimension
 
       c3 = self.conv3(c2)
       return c3
