@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from torchvision.transforms.functional import to_pil_image
 from datasets import WaldoDataset
-from models import BaselineCNN
+from models import BaselineCNN, UNet
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import wandb
@@ -11,23 +11,27 @@ from transforms import Compose, RandomCrop, ToTensor, RandomScale
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-WIDTH, HEIGHT = 300, 300
+WIDTH, HEIGHT = 256, 256
 
 train_dataset = WaldoDataset(transform=Compose([
   RandomScale((0.5, 1.2)),
   RandomCrop(size=(WIDTH, HEIGHT)),
   ToTensor()
 ]))
+
+batch_size = 32
+
 test_dataset = WaldoDataset(test=True, transform=ToTensor())
+test_data = DataLoader(test_dataset, batch_size=1, shuffle=False)
+train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=24)
 
-train_data = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=24)
+model = UNet(in_channels=3).to(device) #BaselineCNN(in_channels=3).to(device)
 
-model = BaselineCNN(in_channels=3).to(device)
-
-num_epochs = 100
-learning_rate = 0.01
+num_epochs = 20
+learning_rate = 1e-3
 optim = torch.optim.Adam(model.parameters(), lr=learning_rate)
-criterion = torch.nn.BCELossWithLogits()
+pos_weight = torch.full((HEIGHT, WIDTH), 50).to(device) # Weight positive examples more.
+criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight) 
 
 loss_history = []
 
@@ -39,42 +43,57 @@ wandb.config = {
 }
 
 
-for epoch in range(num_epochs):
-  print(f"Training epoch {epoch + 1}")
+try:
   
-  model.train()
-  tqdm_train_data = tqdm(train_data)
-  for image, mask, _ in tqdm_train_data:
-    image, mask = image.to(device), mask.to(device)
+  for epoch in range(num_epochs):
+    print(f"Training epoch {epoch + 1}")
 
-    optim.zero_grad()
-    logits = model(image)
-    logits = logits.reshape(logits.shape[0], -1) # Flatten
+    model.train()
+    tqdm_train_data = tqdm(train_data)
+    for image, mask, _ in tqdm_train_data:
+      image, mask = image.to(device), mask.to(device)
 
-    loss = criterion(logits, mask)
-    loss.backward()
+      optim.zero_grad()
+      logits = model(image)
 
-    loss_history.append(loss.item())
-    wandb.log({'loss': loss.item()})
-    wandb.watch(model)
+      loss = criterion(logits, mask)
+      loss.backward()
 
-    tqdm_train_data.set_description(f"Loss: {loss.item():.4f}")
-    optim.step()
+      loss_history.append(loss.item())
+      wandb.log({'loss': loss.item()})
+      wandb.watch(model)
 
-  model.eval()
-  print(f"Testing epoch {epoch + 1}")
-  error = 0
-  tqdm_test_data = tqdm(test_dataset)
-  for image, _, (x, y) in tqdm_test_data:
-    image = image[None, :].to(device) # Add 
-    logits = model(image)
+      tqdm_train_data.set_description(f"Loss: {loss.item():.4f}")
+      optim.step()
 
-    preds = torch.argmax(logits.reshape(logits.shape[0], -1), dim=1)
-  
-    px = (preds % image.shape[3]).item()
-    py = (preds / image.shape[2]).item()
 
-    error += sqrt((x - px) ** 2 + (y - py) ** 2) / len(test_dataset)
-  
-  print("Mean euclideaan distance is {}".format(error))
-  wandb.log({'mean-euclidean': error})
+    print(f"Testing epoch {epoch + 1}")
+    model.eval()
+    error = 0
+    test_masks = []
+    for image, _, (x, y) in test_data:
+      image = image.to(device) # Add 
+      logits = model(image)
+
+      pred_mask = torch.softmax(logits, dim=1)
+
+      test_masks.append(wandb.Image(to_pil_image(pred_mask[0])))
+
+      preds = torch.argmax(logits.reshape(logits.shape[0], -1), dim=1)
+
+      px = (preds % image.shape[3]).item()
+      py = (preds / image.shape[2]).item()
+
+      error += sqrt((x - px) ** 2 + (y - py) ** 2) / len(test_dataset)
+
+    print("Mean euclidean distance is {}".format(error))
+    wandb.log({
+      'mean-euclidean': error,
+      'test-images': test_masks
+    })
+except Exception as e:
+  print(e)
+  pass
+
+
+torch.save(model.state_dict(), "model.torch")

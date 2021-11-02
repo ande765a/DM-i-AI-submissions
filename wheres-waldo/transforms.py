@@ -1,5 +1,4 @@
 import random
-from PIL.Image import Image, BILINEAR
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 
@@ -34,8 +33,9 @@ class RandomScale():
     def __call__(self, image, label):
         scale = random.uniform(self.scale[0], self.scale[1])    
         width, height = image.size
-        return TF.resize(image, (int(height * scale), int(width * scale)), interpolation=BILINEAR), \
-            TF.resize(label, (int(height * scale), int(width * scale)), interpolation=BILINEAR)
+        
+        return TF.resize(image, (int(height * scale), int(width * scale)), interpolation=TF.InterpolationMode.BILINEAR), \
+            TF.resize(label, (int(height * scale), int(width * scale)), interpolation=TF.InterpolationMode.BILINEAR)
 
 class RandomHorizontalFlip():
     def __call__(self, image, label):
