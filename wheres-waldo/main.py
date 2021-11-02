@@ -6,7 +6,7 @@ from datasets import WaldoDataset
 from models import BaselineCNN
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
+import wandb
 from transforms import Compose, RandomCrop, ToTensor, RandomScale
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -32,6 +32,14 @@ criterion = torch.nn.CrossEntropyLoss()
 loss_history = []
 
 
+wandb.init(project="wheres-waldo", entity="andersthuesen")
+
+wandb.config = {
+  'num_epochs': num_epochs,
+  'learning_rate': learning_rate
+}
+
+
 for epoch in range(5):
   print(f"Training epoch {epoch + 1}")
   
@@ -49,6 +57,8 @@ for epoch in range(5):
     loss.backward()
 
     loss_history.append(loss.item())
+    wandb.log({'loss': loss.item()})
+    wandb.watch(model)
 
     tqdm_train_data.set_description(f"Loss: {loss.item():.4f}")
     optim.step()

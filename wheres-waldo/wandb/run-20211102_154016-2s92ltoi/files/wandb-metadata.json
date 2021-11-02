@@ -1,0 +1,24 @@
+{
+    "os": "Linux-3.10.0-1160.42.2.el7.x86_64-x86_64-with-glibc2.17",
+    "python": "3.9.7",
+    "heartbeatAt": "2021-11-02T14:40:18.659448",
+    "startedAt": "2021-11-02T14:40:16.812500",
+    "docker": null,
+    "gpu": "Tesla V100-PCIE-16GB",
+    "gpu_count": 2,
+    "cpu_count": 24,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/zhome/87/0/137565/repos/DM-i-AI-submissions/wheres-waldo/main.py",
+    "codePath": "wheres-waldo/main.py",
+    "git": {
+        "remote": "git@github.com:ande765a/DM-i-AI-submissions.git",
+        "commit": "891f1808529e0093ab9c5be861bf2c53738c3219"
+    },
+    "email": "andersbthuesen@gmail.com",
+    "root": "/zhome/87/0/137565/repos/DM-i-AI-submissions",
+    "host": "n-62-20-1",
+    "username": "s183926",
+    "executable": "/zhome/87/0/137565/miniconda3/envs/wheres-waldo_env/bin/python"
+}
