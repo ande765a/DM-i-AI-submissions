@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = UNet(in_channels=3).to(device)
-model.load_state_dict(torch.load("model.torch", map_location=device))
-
+model.load_state_dict(torch.load("saved-models/model-40.torch", map_location=device))
 
 if __name__ == "__main__":
+  print("Processing")
+  model.eval()
   image_path = sys.argv[1]
   image = Image.open(image_path)
 

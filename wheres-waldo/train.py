@@ -25,7 +25,7 @@ test_dataset = WaldoDataset(test=True, transform=ToTensor())
 test_data = DataLoader(test_dataset, batch_size=1, shuffle=False)
 train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=24)
 
-model = UNet(in_channels=3).to(device) #BaselineCNN(in_channels=3).to(device)
+model = BaselineCNN(in_channels=3).to(device) #BaselineCNN(in_channels=3).to(device)
 #model.load_state_dict(torch.load("model.torch", map_location=device)) # Load model
 
 num_epochs = 20
@@ -62,7 +62,6 @@ try:
 
       loss_history.append(loss.item())
       wandb.log({'loss': loss.item()})
-      wandb.watch(model)
 
       tqdm_train_data.set_description(f"Loss: {loss.item():.4f}")
       optim.step()
