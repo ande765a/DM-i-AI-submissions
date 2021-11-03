@@ -26,8 +26,13 @@ class PredictRequest(BaseModel):
 
 @app.post("/api/predict")
 async def predict(predict_request: PredictRequest):
+
   main_image = Image.open(BytesIO(base64.b64decode(predict_request.image_base64)))
   image_choices = [Image.open(BytesIO(base64.b64decode(choice_base64))) for choice_base64 in predict_request.image_choices_base64]
+
+  main_image.show()
+  for image in image_choices:
+    image.show()
 
   min_error = np.inf
   best_transform = None
