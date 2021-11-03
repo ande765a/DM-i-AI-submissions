@@ -54,3 +54,5 @@ def make_2_way_color_transform(image1, image2, image3):
 
 def make_identity_transform(image1, image2, image3):
   return lambda image1, image2: image2
+
+make_transforms = [make_3_way_color_transform, make_2_way_color_transform, make_identity_transform]

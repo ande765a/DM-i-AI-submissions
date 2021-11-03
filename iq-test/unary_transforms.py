@@ -63,3 +63,6 @@ def identity(image):
     Return the image as is.
     """
     return image
+
+
+all_unary_transforms = [identity, rotate_image_90_counterclockwise, rotate_image_90_clockwise, rotate_image_45_counterclockwise, rotate_image_45_clockwise, flip_image_horizontally, flip_image_vertically, squeeze_horizontally, squeeze_vertically]

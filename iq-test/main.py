@@ -1,14 +1,11 @@
 import numpy as np
 import itertools
 from PIL import Image
-from binary_transforms import make_2_way_color_transform, make_3_way_color_transform, make_identity_transform
-from unary_transforms import identity, rotate_image_45_clockwise, rotate_image_45_counterclockwise, rotate_image_90_clockwise, rotate_image_90_counterclockwise, flip_image_horizontally, flip_image_vertically, squeeze_horizontally, squeeze_vertically
+from binary_transforms import make_transforms
+from unary_transforms import all_unary_transforms
 
 #prefixes = ["1635866624843", "1635866624896", "1635866624972", "1635866625044", "1635866625131", "1635866625181", "1635866625254", "1635866625302", "1635866625376"]
 prefixes = ["1635866625302"]
-
-make_transforms = [make_3_way_color_transform, make_2_way_color_transform, make_identity_transform]
-all_unary_transforms = [identity, rotate_image_90_counterclockwise, rotate_image_90_clockwise, rotate_image_45_counterclockwise, rotate_image_45_clockwise, flip_image_horizontally, flip_image_vertically, squeeze_horizontally, squeeze_vertically]
 
 def get_tile(image, col, row):
     return image.crop((col * 2 * 110, row * 110, (col * 2 + 1) * 110, (row + 1) * 110))
