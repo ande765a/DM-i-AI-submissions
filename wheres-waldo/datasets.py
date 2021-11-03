@@ -22,7 +22,8 @@ class WaldoDataset(Dataset):
     image = Image.open(image_path)
     mask = Image.open(mask_path)
 
+    coord = (x, y)
     if self.transform is not None:
-      image, mask = self.transform(image, mask)
+      image, mask, coord = self.transform(image, mask, coord)
 
-    return image, mask, (x, y)
+    return image, mask, coord
