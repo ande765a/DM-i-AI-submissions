@@ -1,13 +1,14 @@
 import numpy as np
+import itertools
 from PIL import Image
-from binary_transforms import average_image, make_n_way_color_transform, make_2_way_color_transform, make_3_way_color_transform, make_identity_transform
-from unary_transforms import identity, rotate_image_45_clockwise, rotate_image_45_counterclockwise, rotate_image_90_clockwise, rotate_image_90_counterclockwise
+from binary_transforms import make_2_way_color_transform, make_3_way_color_transform, make_identity_transform
+from unary_transforms import identity, rotate_image_45_clockwise, rotate_image_45_counterclockwise, rotate_image_90_clockwise, rotate_image_90_counterclockwise, flip_image_horizontally, flip_image_vertically, squeeze_horizontally, squeeze_vertically
 
-prefixes = ["1635866624843", "1635866624896", "1635866624972", "1635866625044", "1635866625131", "1635866625181"]
+#prefixes = ["1635866624843", "1635866624896", "1635866624972", "1635866625044", "1635866625131", "1635866625181", "1635866625254", "1635866625302", "1635866625376"]
+prefixes = ["1635866625302"]
 
 make_transforms = [make_3_way_color_transform, make_2_way_color_transform, make_identity_transform]
-unary_transforms = [identity, rotate_image_90_counterclockwise, rotate_image_90_clockwise, rotate_image_45_counterclockwise, rotate_image_45_clockwise]
-
+all_unary_transforms = [identity, rotate_image_90_counterclockwise, rotate_image_90_clockwise, rotate_image_45_counterclockwise, rotate_image_45_clockwise, flip_image_horizontally, flip_image_vertically, squeeze_horizontally, squeeze_vertically]
 
 def get_tile(image, col, row):
     return image.crop((col * 2 * 110, row * 110, (col * 2 + 1) * 110, (row + 1) * 110))
@@ -28,29 +29,33 @@ if __name__ == "__main__":
       for make_transform in make_transforms:
         binary_transform = make_transform(im1, im2, im3)
 
-        for unary_transform in unary_transforms:
-          
+        for unary_transforms in itertools.permutations(all_unary_transforms, r=2):
           error = 0
           for row in range(0, 2):
             im1 = get_tile(main_image, 0, row)
             im2 = get_tile(main_image, 1, row)
             im3 = get_tile(main_image, 2, row)
 
-            pred = unary_transform(binary_transform(im1, im2))
+            pred = binary_transform(im1, im2)
+            for unary_transform in unary_transforms:
+              pred = unary_transform(pred)
             error += np.sum(np.square(np.array(pred) - np.array(im3)))
 
           if error < min_error:
             min_error = error
-            best_transform = (binary_transform, unary_transform)
+            best_transform = (binary_transform, unary_transforms)
           
 
     main_image.show()
-    binary_transform, unary_transform = best_transform
+    binary_transform, unary_transforms = best_transform
 
-    pred = unary_transform(binary_transform(
+    pred = binary_transform(
       get_tile(main_image, 0, 3),
       get_tile(main_image, 1, 3)
-    ))
+    )
+
+    for unary_transform in unary_transforms:
+      pred = unary_transform(pred)
     
     min_error = np.inf
     best_choice = None
