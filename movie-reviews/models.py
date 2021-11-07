@@ -9,8 +9,7 @@ class BertForSentiment(nn.Module):
     self.out = nn.Sequential(
       nn.Linear(768, 50),
       nn.ReLU(),
-      nn.Linear(50, 10),
-      nn.Softmax(dim=1) # Categorial ratings
+      nn.Linear(50, 1),
     )
 
     # Freeze BERT weights

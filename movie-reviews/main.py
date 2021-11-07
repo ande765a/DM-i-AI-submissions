@@ -2,6 +2,10 @@ import torch
 from transformers import BertTokenizer
 import re
 from models import BertForSentiment
+from datasets import MovieReviewDataset
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+import wandb
 
 def text_preprocessing(text):
   """
@@ -60,21 +64,53 @@ def preprocessing_for_bert(data):
   return input_ids, attention_masks
 
 
+def collate(inputs):
+  texts, ratings = zip(*inputs)
+  input_ids, attention_masks = preprocessing_for_bert(texts)
+  return texts, torch.concat(input_ids, dim=0), torch.concat(attention_masks, dim=0), torch.tensor(ratings)
+
+
+
 if __name__ == "__main__":
 
+
+
+  dataset = MovieReviewDataset()
+  train_data = DataLoader(dataset, batch_size=32, shuffle=True, collate_fn=collate)
   tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
 
   input_ids, attention_masks = preprocessing_for_bert(["Hello world", "This is super cool!"])
-
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+  learning_rate = 1e-3
+  num_epochs = 50
+
+
   model = BertForSentiment().to(device)
+  optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+  criterion = torch.nn.MSELoss()
 
-  input_ids = torch.concat(input_ids, dim=0).to(device)
-  attention_masks = torch.concat(attention_masks, dim=0).to(device)
+  wandb.init(project="movie-reviews")
+  wandb.config = {
+    "learning_rate": learning_rate,
+    "num_epochs": num_epochs
+  }
 
-  print(input_ids.shape)
+  for epoch in range(num_epochs):
+    train_data_tqdm = tqdm(train_data)
+    for texts, input_ids, attention_masks, ratings in train_data_tqdm:
+      input_ids, attention_masks, ratings = input_ids.to(device), attention_masks.to(device), ratings.to(device)
 
-  pred = model(input_ids, attention_masks)
+      optimizer.zero_grad()
 
-  print(pred)
+      pred_ratings = model(input_ids, attention_masks)
+      loss = criterion(pred_ratings, pred_ratings)
+      loss.backward()
+
+      wandb.log({"loss": loss.item()})
+
+      train_data_tqdm.set_description(f"Epoch {epoch + 1}/{num_epochs} - Loss: {loss.item():.4f}")
+      optimizer.step()
+
+      #break
+    break
