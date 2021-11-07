@@ -2,7 +2,7 @@ import requests
 import re
 
 if __name__ == "__main__":
-	page = 1
+	page = 20
 
 	while True:
 		try:

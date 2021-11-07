@@ -1,11 +1,8 @@
+import re
 import torch
 from transformers import BertTokenizer
-import re
-from models import BertForSentiment
-from datasets import MovieReviewDataset
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-import wandb
+
+MAX_LEN = 256
 
 def text_preprocessing(text):
   """
@@ -25,7 +22,8 @@ def text_preprocessing(text):
 
   return text
 
-MAX_LEN = 64
+tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
+
 def preprocessing_for_bert(data):
   """Perform required preprocessing steps for pretrained BERT.
   @param    data (np.array): Array of texts to be processed.
@@ -69,52 +67,3 @@ def collate(inputs):
   input_ids, attention_masks = preprocessing_for_bert(texts)
   return texts, torch.concat(input_ids, dim=0), torch.concat(attention_masks, dim=0), torch.tensor(ratings)
 
-
-
-if __name__ == "__main__":
-
-
-
-  dataset = MovieReviewDataset()
-  train_data = DataLoader(dataset, batch_size=32, shuffle=True, collate_fn=collate)
-  tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
-
-  input_ids, attention_masks = preprocessing_for_bert(["Hello world", "This is super cool!"])
-  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-  learning_rate = 1e-3
-  num_epochs = 50
-
-
-  model = BertForSentiment().to(device)
-  optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-  criterion = torch.nn.MSELoss()
-
-  wandb.init(project="movie-reviews")
-  wandb.config = {
-    "learning_rate": learning_rate,
-    "num_epochs": num_epochs
-  }
-
-  try:
-    for epoch in range(num_epochs):
-      train_data_tqdm = tqdm(train_data)
-      for texts, input_ids, attention_masks, ratings in train_data_tqdm:
-        input_ids, attention_masks, ratings = input_ids.to(device), attention_masks.to(device), ratings.to(device)
-
-        optimizer.zero_grad()
-
-        pred_ratings = model(input_ids, attention_masks).view(-1)
-        loss = criterion(pred_ratings, ratings)
-        loss.backward()
-
-        wandb.log({"loss": loss.item()})
-
-        train_data_tqdm.set_description(f"Epoch {epoch + 1}/{num_epochs} - Loss: {loss.item():.4f}")
-        optimizer.step()
-
-        #break
-      break
-  finally:
-    print("Saving model")
-    torch.save(model.state_dict(), "model.torch")

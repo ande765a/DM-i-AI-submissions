@@ -1,5 +1,6 @@
 import torch.nn as nn
 from transformers import BertModel
+import torch.nn.functional as F
 
 
 class BertForSentiment(nn.Module):
@@ -7,14 +8,18 @@ class BertForSentiment(nn.Module):
     super(BertForSentiment, self).__init__()
     self.bert = BertModel.from_pretrained(bert_model_name)
     self.out = nn.Sequential(
-      nn.Linear(768, 50),
+      nn.Linear(768, 256),
       nn.ReLU(),
-      nn.Linear(50, 1),
+      nn.Linear(256, 128),
+      nn.ReLU(),
+      nn.Linear(128, 64),
+      nn.ReLU(),
+      nn.Linear(64, 1),
+      nn.ReLU()
     )
 
-    # Freeze BERT weights
-    # for param in self.bert.parameters():
-    #   param.requires_grad = False
+    for param in self.bert.parameters():
+      param.requires_grad = False
 
   def forward(self, input_ids, attention_mask=None):
     outputs = self.bert(input_ids, attention_mask=attention_mask)
