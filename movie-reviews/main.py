@@ -96,21 +96,25 @@ if __name__ == "__main__":
     "num_epochs": num_epochs
   }
 
-  for epoch in range(num_epochs):
-    train_data_tqdm = tqdm(train_data)
-    for texts, input_ids, attention_masks, ratings in train_data_tqdm:
-      input_ids, attention_masks, ratings = input_ids.to(device), attention_masks.to(device), ratings.to(device)
+  try:
+    for epoch in range(num_epochs):
+      train_data_tqdm = tqdm(train_data)
+      for texts, input_ids, attention_masks, ratings in train_data_tqdm:
+        input_ids, attention_masks, ratings = input_ids.to(device), attention_masks.to(device), ratings.to(device)
 
-      optimizer.zero_grad()
+        optimizer.zero_grad()
 
-      pred_ratings = model(input_ids, attention_masks)
-      loss = criterion(pred_ratings, pred_ratings)
-      loss.backward()
+        pred_ratings = model(input_ids, attention_masks).view(-1)
+        loss = criterion(pred_ratings, ratings)
+        loss.backward()
 
-      wandb.log({"loss": loss.item()})
+        wandb.log({"loss": loss.item()})
 
-      train_data_tqdm.set_description(f"Epoch {epoch + 1}/{num_epochs} - Loss: {loss.item():.4f}")
-      optimizer.step()
+        train_data_tqdm.set_description(f"Epoch {epoch + 1}/{num_epochs} - Loss: {loss.item():.4f}")
+        optimizer.step()
 
-      #break
-    break
+        #break
+      break
+  finally:
+    print("Saving model")
+    torch.save(model.state_dict(), "model.torch")

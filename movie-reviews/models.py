@@ -13,8 +13,8 @@ class BertForSentiment(nn.Module):
     )
 
     # Freeze BERT weights
-    for param in self.bert.parameters():
-      param.requires_grad = False
+    # for param in self.bert.parameters():
+    #   param.requires_grad = False
 
   def forward(self, input_ids, attention_mask=None):
     outputs = self.bert(input_ids, attention_mask=attention_mask)
