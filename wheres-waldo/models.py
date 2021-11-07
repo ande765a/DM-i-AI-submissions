@@ -8,13 +8,35 @@ from torchvision.models import  resnet18
 from receptive_field import receptive_field
 
 
+class TransferModel2(nn.Module):
+  def __init__(self):
+    super(TransferModel2, self).__init__()
+    self.resnet18 = resnet18(pretrained=True)
+
+    self.conv1 = nn.Conv2d(64, 32, kernel_size=3, stride=2)
+    self.relu = nn.ReLU(inplace=True)
+    self.conv2 = nn.Conv2d(32, 1, kernel_size=3, stride=2)
+
+  def forward(self, x):
+    x = self.resnet18.conv1(x)
+    x = self.resnet18.bn1(x)
+    x = self.resnet18.relu(x)
+    x = self.resnet18.maxpool(x)
+    x = self.resnet18.layer1(x)
+    #x = self.resnet18.layer2(x)
+    x = self.conv1(x)
+    x = self.relu(x)
+    x = self.conv2(x)
+    
+    return x
+
 class TransferModel(nn.Module):
   def __init__(self):
     super(TransferModel, self).__init__()
     self.resnet18 = resnet18(pretrained=True)
 
-    for param in self.resnet18.parameters():
-      param.requires_grad = False
+    # for param in self.resnet18.parameters():
+    #   param.requires_grad = False
 
     self.conv1 = nn.Conv2d(128, 32, kernel_size=4)
     self.relu = nn.ReLU(inplace=True)
@@ -57,13 +79,12 @@ class SimpleCNN(nn.Module):
     return self.conv(x)
 
 if __name__ == "__main__":
-  resnet = resnet18(pretrained=True)
-  print(resnet)
-
-  out = TransferModel()(torch.zeros(1, 3, 32, 32))
-
+  model = TransferModel()
+  out = model(torch.zeros(1, 3, 32, 32))
   print(out.shape)
-  receptive_field(TransferModel(), (3, 256, 256))
+  out = model(torch.zeros(1, 3, 1500, 1500))
+  print(out.shape)
+  #receptive_field(model.to(torch.device("cuda:0")), (3, 1500, 1500))
 
 
 class ResBlock2d(nn.Module):

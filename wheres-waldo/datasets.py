@@ -18,9 +18,10 @@ class WaldoDataset(Dataset):
   def __getitem__(self, index):
     image_filename, x, y = self.df.iloc[index % len(self.df)]
     image_path = os.path.join(self.root_path, "images", image_filename)
-    mask_path = os.path.join(self.root_path, "masks", image_filename)
+    #mask_path = os.path.join(self.root_path, "masks", image_filename)
     image = Image.open(image_path)
-    mask = Image.open(mask_path)
+    #mask = Image.open(mask_path)
+    mask = image.copy()
 
     coord = (x, y)
     visible = 1

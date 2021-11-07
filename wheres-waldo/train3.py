@@ -1,6 +1,7 @@
 from math import sqrt
 import torch
 import matplotlib.pyplot as plt
+from torch.utils.data.dataset import ConcatDataset
 from torchvision.transforms.functional import to_pil_image
 from datasets import WaldoDataset
 from models import BaselineCNN, SimpleCNN, TransferModel, UNet
@@ -19,18 +20,18 @@ train_dataset = WaldoDataset(transform=Compose([
   ToTensor()
 ]))
 
-batch_size = 192
+batch_size = 64
 
 test_dataset = WaldoDataset(test=True, transform=ToTensor())
 test_data = DataLoader(test_dataset, batch_size=1, shuffle=False)
-train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
+train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=24)
 
 model = TransferModel().to(device) #BaselineCNN(in_channels=3).to(device)
-#model.load_state_dict(torch.load("model.torch", map_location=device)) # Load model
+model.load_state_dict(torch.load("model.torch", map_location=device)) # Load model
 
-num_epochs = 20
-learning_rate = 1e-2
-optim = torch.optim.SGD(model.parameters(), lr=learning_rate)
+num_epochs = 50
+learning_rate = 1e-3
+optim = torch.optim.Adam(model.parameters(), lr=learning_rate)
 #pos_weight = torch.full((HEIGHT, WIDTH), 50).to(device) # Weight positive examples more.
 criterion = torch.nn.BCEWithLogitsLoss() 
 
