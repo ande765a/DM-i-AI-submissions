@@ -1,0 +1,46 @@
+import sys
+import torch
+from PIL import Image
+from models import TransferModel
+from torchvision.transforms.functional import to_pil_image, to_tensor
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+model = TransferModel().to(device)
+model.load_state_dict(torch.load("model.torch", map_location=device))
+
+
+if __name__ == "__main__":
+  print("Processing")
+  model.eval()
+  image_path = sys.argv[1]
+  image = Image.open(image_path)
+
+  image = to_tensor(image)
+  image = image[None, :].to(device)
+
+  mask = model(image)
+  mask = torch.sigmoid(mask)
+
+  print(mask.shape)
+
+
+  preds = torch.argmax(mask.reshape(mask.shape[0], -1), dim=1)
+
+
+  px = int((preds % mask.shape[3]).item()) * 8 + 30
+  py = int((preds / mask.shape[2]).item()) * 8 + 16
+
+  print(f"Found at {px},{py}")
+
+
+  #mask[mask != mask.max()] = 0
+
+  mask = to_pil_image(mask[0])
+
+  mask.save("mask.jpg")
+
+
+
+
+
+  

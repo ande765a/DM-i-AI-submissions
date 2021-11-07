@@ -1,6 +1,7 @@
 from math import sqrt
 import torch
 import matplotlib.pyplot as plt
+from torch.utils.data.dataset import ConcatDataset
 from torchvision.transforms.functional import to_pil_image
 from datasets import WaldoDataset
 from models import BaselineCNN, UNet
@@ -13,24 +14,25 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 WIDTH, HEIGHT = 256, 256
 
+original_train_dataset = WaldoDataset(transform=ToTensor())
 train_dataset = WaldoDataset(transform=Compose([
   RandomScale((0.5, 1.2)),
   RandomCrop(size=(WIDTH, HEIGHT)),
   ToTensor()
 ]))
 
-batch_size = 32
+batch_size = 64
 
 test_dataset = WaldoDataset(test=True, transform=ToTensor())
 test_data = DataLoader(test_dataset, batch_size=1, shuffle=False)
-train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=24)
+train_data = DataLoader(ConcatDataset([original_train_dataset, train_dataset]), batch_size=batch_size, shuffle=True, num_workers=24)
 
 model = BaselineCNN(in_channels=3).to(device) #BaselineCNN(in_channels=3).to(device)
 #model.load_state_dict(torch.load("model.torch", map_location=device)) # Load model
 
 num_epochs = 20
-learning_rate = 1e-2
-optim = torch.optim.SGD(model.parameters(), lr=learning_rate)
+learning_rate = 1e-1
+optim = torch.optim.Adam(model.parameters(), lr=learning_rate)
 #pos_weight = torch.full((HEIGHT, WIDTH), 50).to(device) # Weight positive examples more.
 criterion = torch.nn.BCEWithLogitsLoss() 
 
@@ -89,4 +91,5 @@ except Exception as e:
   pass
 
 
+print("Saving model")
 torch.save(model.state_dict(), "model.torch")
